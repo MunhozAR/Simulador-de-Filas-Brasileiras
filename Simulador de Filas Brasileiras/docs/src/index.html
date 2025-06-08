@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador de Filas Brasileiras</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    .textarea-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 800px;
+    }
+    .textarea-container textarea {
+      width: 100%;
+      height: 200px;
+      margin: 10px 0;
+      padding: 10px;
+      resize: none;
+      font-family: monospace;
+    }
+    .simular-btn {
+      align-self: flex-start;
+      margin-top: 10px;
+      margin-bottom: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Simulador de Filas Brasileiras</h1>
+
+  <div class="textarea-container">
+    <label for="txtInput"><strong>ENTRADA</strong></label>
+    <textarea id="txtInput" placeholder="Digite os comandos aqui..."></textarea>
+
+    <button id="btn-simul" class="simular-btn">SIMULAR</button>
+
+    <label for="txtOutput"><strong>SAÍDA</strong></label>
+    <textarea id="txtOutput" readonly placeholder="Resultado..."></textarea>
+  </div>
+
+  <script>
+    const engine = {
+      groups: {},
+      queues: {},
+      outputText: '',
+
+      parse(input) {
+        const lines = input.trim().split('\n');
+        return lines.map(line => line.trim().split(' '));
+      },
+
+      output(text) {
+        this.outputText += text + '\n';
+      },
+
+      exec(command) {
+        const action = command[0];
+
+        if (action === 'grupo:') this.execNewGroup(command);
+        else if (action === 'existe:') this.output(this.execExists(command));
+        else if (action === 'conhece:') this.output(this.execKnow(command));
+        else if (action === 'criaFila:') this.execNewQueue(command);
+        else if (action === 'atendeFila:') {
+          for (let i = 1; i < command.length; i++) this.execServeQueue(command[i]);
+        }
+        else if (action === 'chegou:') {
+          for (let i = 1; i < command.length; i++) this.execArrived(command[i]);
+        }
+        else if (action === 'desiste:') {
+          for (let i = 1; i < command.length; i++) this.execGiveUp(command[i]);
+        }
+        else if (action === 'imprime:') this.print();
+      },
+
+      execNewGroup(command) {
+        const people = command.slice(1);
+        const groupId = 'grupo' + (Object.keys(this.groups).length + 1);
+        this.groups[groupId] = people;
+      },
+
+      execExists(command) {
+        const name = command[1];
+        for (const group of Object.values(this.groups)) {
+          if (group.includes(name)) {
+            return `[${name}] existe!`;
+          }
+        }
+        return `[${name}] NÃO existe!`;
+      },
+
+      execKnow(command) {
+        const [_, name1, name2] = command;
+        for (const group of Object.values(this.groups)) {
+          if (group.includes(name1) && group.includes(name2)) {
+            return `[${name1}] conhece [${name2}]`;
+          }
+        }
+        return `[${name1}] NÃO conhece [${name2}]`;
+      },
+
+      execNewQueue(command) {
+        const id = command[1];
+        this.queues[id] = [];
+      },
+
+      execServeQueue(queueId) {
+        if (this.queues[queueId] && this.queues[queueId].length > 0) {
+          this.queues[queueId].shift();
+        }
+      },
+
+      execArrived(name) {
+        let bestQueue = null;
+        let bestIndex = Infinity;
+
+        for (const [queueId, queue] of Object.entries(this.queues)) {
+          let insertIndex = queue.length;
+
+          for (let i = 0; i < queue.length; i++) {
+            if (this.knows(name, queue[i])) {
+              insertIndex = i + 1;
+            }
+          }
+
+          if (
+            insertIndex < bestIndex ||
+            (insertIndex === bestIndex && queue.length < (bestQueue?.length || Infinity))
+          ) {
+            bestQueue = queue;
+            bestIndex = insertIndex;
+          }
+        }
+
+        if (bestQueue) {
+          bestQueue.splice(bestIndex, 0, name);
+        }
+      },
+
+      knows(name1, name2) {
+        for (const group of Object.values(this.groups)) {
+          if (group.includes(name1) && group.includes(name2)) {
+            return true;
+          }
+        }
+        return false;
+      },
+
+      execGiveUp(name) {
+        for (const queue of Object.values(this.queues)) {
+          const index = queue.indexOf(name);
+          if (index >= 0) {
+            queue.splice(index, 1);
+            break;
+          }
+        }
+      },
+
+      print() {
+        for (const [id, queue] of Object.entries(this.queues)) {
+          const people = queue.join(', ');
+          this.output(`#${id} [ ${people} ]`);
+        }
+      },
+
+      run(commands) {
+        this.groups = {};
+        this.queues = {};
+        this.outputText = '';
+        for (const command of commands) {
+          this.exec(command);
+        }
+      }
+    };
+
+    document.getElementById('btn-simul').addEventListener('click', () => {
+      const inputText = document.getElementById('txtInput').value;
+      const comandos = engine.parse(inputText);
+      engine.run(comandos);
+      document.getElementById('txtOutput').value = engine.outputText;
+    });
+  </script>
+</body>
+</html>

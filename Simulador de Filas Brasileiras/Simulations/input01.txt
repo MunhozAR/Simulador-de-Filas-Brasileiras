@@ -1,0 +1,7 @@
+grupo: Luna Theo Gael Clara
+grupo: Ravi Duda
+grupo: Jade Nico Bella
+existe: Theo
+existe: maça
+conhece: Jade Bella
+conhece: Gael Duda
