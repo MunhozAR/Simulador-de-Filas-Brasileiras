@@ -1,0 +1,10 @@
+
+ ----jGRASP exec: java Main
+Olga existe!
+Julia não existe!
+Julia não conhece Alface
+Fabio conhece Ivo
+#Guiche1 [Alface, Bia, Guga]
+#Guiche2 [Ivo, Fabio, Manuel]
+
+ ----jGRASP: operation complete.

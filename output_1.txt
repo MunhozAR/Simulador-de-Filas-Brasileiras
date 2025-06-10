@@ -1,0 +1,7 @@
+ ----jGRASP exec: java Main
+Bia existe!
+Banana não existe!
+Maria conhece Alface
+Guga não conhece Olga
+
+ ----jGRASP: operation complete.
